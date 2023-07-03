@@ -1,0 +1,338 @@
+%**************************************************************************
+%       User documentation of any code that uses this code must cite the
+%       Authors in following article:
+%
+%       Korayem, M. H., Nekoo, S. R., & Korayem, A. H. (2016). Finite time
+%       SDRE control design for mobile robots with differential wheels.
+%       Journal of Mechanical Science and Technology, 30(9), 4353-4361.
+%
+%       Permission to modify this file (ONLY) and to distribute modified
+%       code is granted, provided the above notices are retained, and a
+%       notice that the code was modified is included with the above
+%       statements.
+%
+%       NOTE: This MATLAB code is provided free of charge.
+%       You may make copies of the codes, but this NOTICE must appear in
+%       all copies.
+%**************************************************************************
+function Run_Mobile_Robot
+clc
+clear
+close all
+global d r b mb mw Izzb Izzw Iyyw Q R ws ydes ustall omeganl kp kd
+%Time----------------------------------------------------------------------
+tf=3;
+N=999;
+%Initial and final condition-----------------------------------------------
+xci=0;
+yci=0;
+yin=[xci;yci;0;0;0;0];
+xcf=-2.25;
+ycf=0.75;
+ydes=[xcf;ycf;0;0];
+%Control-------------------------------------------------------------------
+R=eye(2);
+Q=10*diag([10,10,1,1]);
+kp=100*eye(2);
+kd=80*eye(2);
+ws=0.1;
+%Parameters----------------------------------------------------------------
+d=0.065;
+r=0.08;
+b=0.145;
+mb=6;
+mw=0.32;
+Izzb=0.06363;
+Izzw=0.00006;
+Iyyw=0.00081;
+ustall=[6.85;6.85];
+omeganl=[14;14];
+%ODE-----------------------------------------------------------------------
+[t,x]=ode45(@sysSDRE,0:tf/N:tf,yin);
+afFigurePosition=[200,150,380,220];
+%Plot----------------------------------------------------------------------
+figure(1)
+axesi=axes('Parent',figure(1),'FontWeight','bold',...
+    'FontSize',10,'FontName','Cambria');
+hold(axesi,'all');grid on;box on;
+plot(t,x(:,1),'b','Linewidth',1.5)
+plot(t,x(:,2),'--r','Linewidth',1.5)
+xlabel('t (s)','FontWeight','bold','FontSize',10,'FontName','Cambria')
+ylabel('Base position (m)','FontWeight','bold','FontSize',10,'FontName','Cambria')
+xlim([0,tf]);set(gcf,'Position',afFigurePosition)
+legend('x_c(t)','y_c(t)')
+
+figure(2)
+axesi=axes('Parent',figure(2),'FontWeight','bold',...
+    'FontSize',10,'FontName','Cambria');
+hold(axesi,'all');grid on;box on;
+plot(t,x(:,3),'b','Linewidth',1.5)
+plot(t,x(:,4),'--r','Linewidth',1.5)
+xlabel('t (s)','FontWeight','bold','FontSize',10,'FontName','Cambria')
+ylabel('Wheels rotation (rad)','FontWeight','bold','FontSize',10,'FontName','Cambria')
+xlim([0,tf]);set(gcf,'Position',afFigurePosition)
+legend('\theta_r(t)','\theta_l(t)')
+
+figure(3)
+axesi=axes('Parent',figure(3),'FontWeight','bold',...
+    'FontSize',10,'FontName','Cambria');
+hold(axesi,'all');grid on;box on;
+plot(t,x(:,5),'b','Linewidth',1.5)
+plot(t,x(:,6),'--r','Linewidth',1.5)
+xlabel('t (s)','FontWeight','bold','FontSize',10,'FontName','Cambria')
+ylabel('Wheels rotary speed (rad/s)','FontWeight','bold','FontSize',10,'FontName','Cambria')
+xlim([0,tf]);set(gcf,'Position',afFigurePosition)
+legend('\omega_r(t)','\omega_l(t)')
+
+afFigurePosition=[200,150,380,280];
+figure(4)
+axesi=axes('Parent',figure(4),'FontWeight','bold',...
+    'FontSize',10,'FontName','Cambria');
+hold(axesi,'all');grid on;box on;
+plot(xci,yci,'*r')
+plot(xcf,ycf,'or')
+xc=x(:,1);
+yc=x(:,2);
+xr=x(:,3);
+xl=x(:,4);
+phi=(r*(xr-xl))/(2*b);
+xws=x(:,1)+ws*cos(phi);
+yws=x(:,2)+ws*sin(phi);
+plot(xws,yws,'b','linewidth',1.5)
+for p=1:20:size(t,1)
+    xw1=xc(p)+b*cos(phi(p))-b*cos(phi(p)+pi/2);
+    yw1=yc(p)+b*sin(phi(p))-b*sin(phi(p)+pi/2);
+    xw2=xc(p)+b*cos(phi(p))+b*cos(phi(p)+pi/2);
+    yw2=yc(p)+b*sin(phi(p))+b*sin(phi(p)+pi/2);
+    xw3=xc(p)-b/2*cos(phi(p))+b*cos(phi(p)+pi/2);
+    yw3=yc(p)-b/2*sin(phi(p))+b*sin(phi(p)+pi/2);
+    xw4=xc(p)-b*cos(phi(p))+b/2*cos(phi(p)+pi/2);
+    yw4=yc(p)-b*sin(phi(p))+b/2*sin(phi(p)+pi/2);
+    xw5=xc(p)-b*cos(phi(p))-b/2*cos(phi(p)+pi/2);
+    yw5=yc(p)-b*sin(phi(p))-b/2*sin(phi(p)+pi/2);
+    xw6=xc(p)-b/2*cos(phi(p))-b*cos(phi(p)+pi/2);
+    yw6=yc(p)-b/2*sin(phi(p))-b*sin(phi(p)+pi/2);
+    line([xw1;xw2],[yw1;yw2],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw2;xw3],[yw2;yw3],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw3;xw4],[yw3;yw4],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw4;xw5],[yw4;yw5],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw5;xw6],[yw5;yw6],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw6;xw1],[yw6;yw1],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    xw7=xc(p)+b*cos(phi(p))-b*cos(phi(p)+pi/2);
+    yw7=yc(p)+b*sin(phi(p))-b*sin(phi(p)+pi/2);
+    xw8=xc(p)+b*cos(phi(p))+b*cos(phi(p)+pi/2);
+    yw8=yc(p)+b*sin(phi(p))+b*sin(phi(p)+pi/2);
+    xw9=xc(p)-b/2*cos(phi(p))+b*cos(phi(p)+pi/2);
+    yw9=yc(p)-b/2*sin(phi(p))+b*sin(phi(p)+pi/2);
+    xw10=xc(p)-b*cos(phi(p))+b/2*cos(phi(p)+pi/2);
+    yw10=yc(p)-b*sin(phi(p))+b/2*sin(phi(p)+pi/2);
+    xw11=xc(p)-b*cos(phi(p))-b/2*cos(phi(p)+pi/2);
+    yw11=yc(p)-b*sin(phi(p))-b/2*sin(phi(p)+pi/2);
+    xw12=xc(p)-b/2*cos(phi(p))-b*cos(phi(p)+pi/2);
+    yw12=yc(p)-b/2*sin(phi(p))-b*sin(phi(p)+pi/2);
+    line([xw7;xw8],[yw7;yw8],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw8;xw9],[yw8;yw9],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw9;xw10],[yw9;yw10],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw10;xw11],[yw10;yw11],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw11;xw12],[yw11;yw12],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw12;xw7],[yw12;yw7],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw7;xw1],[yw7;yw1],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw8;xw2],[yw8;yw2],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw9;xw3],[yw9;yw3],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw10;xw4],[yw10;yw4],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw11;xw5],[yw11;yw5],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+    line([xw12;xw6],[yw12;yw6],'color',[0.501960813999176 0.501960813999176 0.501960813999176])
+end
+xlabel('x (m)','FontWeight','bold','FontSize',10,'FontName','Cambria')
+ylabel('y (m)','FontWeight','bold','FontSize',10,'FontName','Cambria')
+set(gcf,'Position',afFigurePosition)
+axis equal
+legend('start point','end point','trajectory','robot')
+
+Error_SDRE_mm=sqrt((xws(length(t))-xcf).^2+(yws(length(t))-ycf).^2)*1000
+
+for p=1:length(t)
+    xc=x(p,1);
+    yc=x(p,2);
+    xr=x(p,3);
+    xl=x(p,4);
+    dxr=x(p,5);
+    dxl=x(p,6);
+    %Dynamics matrices-----------------------------------------------------
+    phi=r/2/b*(xr-xl);
+    dphi=r/2/b*(dxr-dxl);
+
+    m11=mb+2*mw;
+    m12=0;
+    m13=-mw*r*d/b*sin(phi);
+    m14=mw*r*d/b*sin(phi);
+    m22=mb+2*mw;
+    m23=mw*r*d/b*cos(phi);
+    m24=-mw*r*d/b*cos(phi);
+    m33=r^2/4/b^2*(2*mw*(b^2+d^2)+Izzb+2*Izzw)+Iyyw;
+    m34=-r^2/4/b^2*(2*mw*(b^2+d^2)+Izzb+2*Izzw);
+    m44=r^2/4/b^2*(2*mw*(b^2+d^2)+Izzb+2*Izzw)+Iyyw;
+
+    M=[m11,m12,m13,m14;...
+        m12,m22,m23,m24;...
+        m13,m23,m33,m34;...
+        m14,m24,m34,m44];
+
+    C_bar=[-mw*r^2*d/2/b^2*(dxr-2*dxl)*cos(phi),-mw*r^2*d/2/b^2*dxl*cos(phi);...
+        -mw*r^2*d/2/b^2*dxr*sin(phi),-mw*r^2*d/2/b^2*(dxl-2*dxr)*sin(phi);...
+        zeros(2,2)];
+
+    S=[r/2*cos(phi),r/2*cos(phi);...
+        r/2*sin(phi),r/2*sin(phi);...
+        eye(2)];
+
+    Sdot=[-r/2*dphi*sin(phi),-r/2*dphi*sin(phi);...
+        r/2*dphi*cos(phi),r/2*dphi*cos(phi);...
+        zeros(2,2)];
+    %Control---------------------------------------------------------------
+    y=[xc+ws*cos(phi);...
+        yc+ws*sin(phi)];
+
+    dy=[r/2*(dxr+dxl)*cos(phi)-ws*dphi*sin(phi);...
+        r/2*(dxr+dxl)*sin(phi)+ws*dphi*cos(phi)];
+
+    alpha=[r/2/b*(b*cos(phi)-ws*sin(phi)),r/2/b*(b*cos(phi)+ws*sin(phi));...
+        r/2/b*(b*sin(phi)+ws*cos(phi)),r/2/b*(b*sin(phi)-ws*cos(phi))];
+
+    beta_bar11=-r^2/4/b*(dxl+dxr)*sin(phi)+r^2*ws/4/b^2*(dxl-dxr)*cos(phi);
+    beta_bar12=+r^2/4/b*(dxl+dxr)*sin(phi)-r^2*ws/4/b^2*(dxl-dxr)*cos(phi);
+    beta_bar21=+r^2/4/b*(dxl+dxr)*cos(phi)+r^2*ws/4/b^2*(dxl-dxr)*sin(phi);
+    beta_bar22=-r^2/4/b*(dxl+dxr)*cos(phi)-r^2*ws/4/b^2*(dxl-dxr)*sin(phi);
+
+    beta_bar=[beta_bar11,beta_bar12;...
+        beta_bar21,beta_bar22];
+
+    A=[zeros(2,2),eye(2);...
+        zeros(2,2),alpha*(inv(S'*M*S)*(-S'*M*Sdot-S'*C_bar))+beta_bar];
+
+    B=[zeros(2,2);...
+        alpha*inv(S'*M*S)];
+
+    K=care(A,B,Q,R);
+
+    u=-inv(R)*B'*K*([y;dy]-ydes);
+
+    if u(1) > (ustall(1)-ustall(1)/omeganl(1)*dxr)
+        u(1)=ustall(1)-ustall(1)/omeganl(1)*dxr;
+    end
+    if u(1) < (-ustall(1)-ustall(1)/omeganl(1)*dxr)
+        u(1)=-ustall(1)-ustall(1)/omeganl(1)*dxr;
+    end
+    if u(2) > (ustall(2)-ustall(2)/omeganl(2)*dxl)
+        u(2)=ustall(2)-ustall(2)/omeganl(2)*dxl;
+    end
+    if u(2) < (-ustall(2)-ustall(2)/omeganl(2)*dxl)
+        u(2)=-ustall(2)-ustall(2)/omeganl(2)*dxl;
+    end
+
+    us(1:2,p)=u;
+    nus(p)=norm(u);
+end
+
+afFigurePosition=[200,150,380,220];
+figure(5)
+axesi=axes('Parent',figure(5),'FontWeight','bold',...
+    'FontSize',10,'FontName','Cambria');
+hold(axesi,'all');grid on;box on;
+plot(t,us(1,:),'b','Linewidth',1.5)
+plot(t,us(2,:),'--r','Linewidth',1.5)
+xlabel('t (s)','FontWeight','bold','FontSize',10,'FontName','Cambria')
+ylabel('\tau (N.m)','FontWeight','bold','FontSize',10,'FontName','Cambria')
+xlim([0,tf]);set(gcf,'Position',afFigurePosition)
+legend('right','left')
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function xdot=sysSDRE(t,x)
+global d r b mb mw Izzb Izzw Iyyw Q R ws ydes ustall omeganl
+xc=x(1);
+yc=x(2);
+xr=x(3);
+xl=x(4);
+dxr=x(5);
+dxl=x(6);
+%Dynamics matrices---------------------------------------------------------
+phi=r/2/b*(xr-xl);
+dphi=r/2/b*(dxr-dxl);
+
+m11=mb+2*mw;
+m12=0;
+m13=-mw*r*d/b*sin(phi);
+m14=mw*r*d/b*sin(phi);
+m22=mb+2*mw;
+m23=mw*r*d/b*cos(phi);
+m24=-mw*r*d/b*cos(phi);
+m33=r^2/4/b^2*(2*mw*(b^2+d^2)+Izzb+2*Izzw)+Iyyw;
+m34=-r^2/4/b^2*(2*mw*(b^2+d^2)+Izzb+2*Izzw);
+m44=r^2/4/b^2*(2*mw*(b^2+d^2)+Izzb+2*Izzw)+Iyyw;
+
+M=[m11,m12,m13,m14;...
+    m12,m22,m23,m24;...
+    m13,m23,m33,m34;...
+    m14,m24,m34,m44];
+
+c=[-2*mw*d*dphi^2*cos(phi);...
+    -2*mw*d*dphi^2*sin(phi);...
+    zeros(2,1)];
+
+C_bar=[-mw*r^2*d/2/b^2*(dxr-2*dxl)*cos(phi),-mw*r^2*d/2/b^2*dxl*cos(phi);...
+    -mw*r^2*d/2/b^2*dxr*sin(phi),-mw*r^2*d/2/b^2*(dxl-2*dxr)*sin(phi);...
+    zeros(2,2)];
+
+S=[r/2*cos(phi),r/2*cos(phi);...
+    r/2*sin(phi),r/2*sin(phi);...
+    eye(2)];
+
+Sdot=[-r/2*dphi*sin(phi),-r/2*dphi*sin(phi);...
+    r/2*dphi*cos(phi),r/2*dphi*cos(phi);...
+    zeros(2,2)];
+
+v=[dxr;dxl];
+%Control-------------------------------------------------------------------
+y=[xc+ws*cos(phi);...
+    yc+ws*sin(phi)];
+
+dy=[r/2*(dxr+dxl)*cos(phi)-ws*dphi*sin(phi);...
+    r/2*(dxr+dxl)*sin(phi)+ws*dphi*cos(phi)];
+
+alpha=[r/2/b*(b*cos(phi)-ws*sin(phi)),r/2/b*(b*cos(phi)+ws*sin(phi));...
+    r/2/b*(b*sin(phi)+ws*cos(phi)),r/2/b*(b*sin(phi)-ws*cos(phi))];
+
+beta_bar11=-r^2/4/b*(dxl+dxr)*sin(phi)+r^2*ws/4/b^2*(dxl-dxr)*cos(phi);
+beta_bar12=+r^2/4/b*(dxl+dxr)*sin(phi)-r^2*ws/4/b^2*(dxl-dxr)*cos(phi);
+beta_bar21=+r^2/4/b*(dxl+dxr)*cos(phi)+r^2*ws/4/b^2*(dxl-dxr)*sin(phi);
+beta_bar22=-r^2/4/b*(dxl+dxr)*cos(phi)-r^2*ws/4/b^2*(dxl-dxr)*sin(phi);
+
+beta_bar=[beta_bar11,beta_bar12;...
+    beta_bar21,beta_bar22];
+
+A=[zeros(2,2),eye(2);...
+    zeros(2,2),alpha*(inv(S'*M*S)*(-S'*M*Sdot-S'*C_bar))+beta_bar];
+
+B=[zeros(2,2);...
+    alpha*inv(S'*M*S)];
+
+K=care(A,B,Q,R);
+
+u=-inv(R)*B'*K*([y;dy]-ydes);
+
+if u(1) > (ustall(1)-ustall(1)/omeganl(1)*dxr)
+    u(1)=ustall(1)-ustall(1)/omeganl(1)*dxr;
+end
+if u(1) < (-ustall(1)-ustall(1)/omeganl(1)*dxr)
+    u(1)=-ustall(1)-ustall(1)/omeganl(1)*dxr;
+end
+if u(2) > (ustall(2)-ustall(2)/omeganl(2)*dxl)
+    u(2)=ustall(2)-ustall(2)/omeganl(2)*dxl;
+end
+if u(2) < (-ustall(2)-ustall(2)/omeganl(2)*dxl)
+    u(2)=-ustall(2)-ustall(2)/omeganl(2)*dxl;
+end
+%System--------------------------------------------------------------------
+xdot=[S*v;...
+    inv(S'*M*S)*(u-S'*M*Sdot*v-S'*c)];
